@@ -5,15 +5,11 @@ import lambda.data.JobHistoryEntry;
 import lambda.data.Person;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @SuppressWarnings({"ConstantConditions", "unused"})
 class Exercise1 {
@@ -23,7 +19,13 @@ class Exercise1 {
         List<Employee> employees = getEmployees();
 
         // TODO реализация, использовать Collectors.toList()
-        List<Person> personsEverWorkedInEpam = null;
+        List<Person> personsEverWorkedInEpam = employees.stream()
+                                                        .filter(employee -> employee.getJobHistory()
+                                                                                    .stream()
+                                                                                    .anyMatch(entry -> entry.getEmployer()
+                                                                                                            .equalsIgnoreCase("EPAM")))
+                                                        .map(Employee::getPerson)
+                                                        .collect(Collectors.toList());
 
         assertThat(personsEverWorkedInEpam, contains(
                 employees.get(0).getPerson(),
@@ -38,8 +40,13 @@ class Exercise1 {
         List<Employee> employees = getEmployees();
 
         // TODO реализация, использовать Collectors.toList()
-        List<Person> startedFromEpam = null;
-
+        List<Person> startedFromEpam = employees.stream()
+                                                .filter(employee -> {
+                                                    Optional<JobHistoryEntry> firstJob = employee.getJobHistory().stream().findFirst();
+                                                    return firstJob.isPresent() && firstJob.get().getEmployer().equalsIgnoreCase("EPAM");
+                                                })
+                                                .map(Employee::getPerson)
+                                                .collect(Collectors.toList());
         assertThat(startedFromEpam, contains(
                 employees.get(0).getPerson(),
                 employees.get(1).getPerson(),
@@ -52,7 +59,11 @@ class Exercise1 {
         List<Employee> employees = getEmployees();
 
         // TODO реализация, использовать Collectors.toSet()
-        Set<String> companies = null;
+        Set<String> companies = employees.stream()
+                                         .flatMap(employee -> employee.getJobHistory().stream())
+                                         .map(JobHistoryEntry::getEmployer)
+                                         .distinct()
+                                         .collect(Collectors.toSet());
 
         assertThat(companies, containsInAnyOrder("EPAM", "google", "yandex", "mail.ru", "T-Systems"));
     }
@@ -62,7 +73,11 @@ class Exercise1 {
         List<Employee> employees = getEmployees();
 
         // TODO реализация
-        Integer minimalAge = null;
+        Integer minimalAge = employees.stream()
+                                      .min(Comparator.comparingInt(e -> e.getPerson().getAge()))
+                                      .get()
+                                      .getPerson()
+                                      .getAge();
 
         assertThat(minimalAge, is(21));
     }
